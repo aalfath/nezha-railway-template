@@ -1,3 +1,5 @@
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template/nezha-1?utm_medium=integration&utm_source=button&utm_campaign=nezha)
+
 # Nezha on Railway
 
 One-click Railway template for [Nezha](https://github.com/nezhahq/nezha), a lightweight self-hosted server and website monitoring dashboard. Small agents on your machines report CPU, memory, disk, traffic and uptime to the dashboard over gRPC.

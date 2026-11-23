@@ -9,3 +9,4 @@ Deployers get an "update available" notice in Railway when a new entry lands on 
 - The default `admin/admin` login is replaced on first boot with the generated `ADMIN_PASSWORD`.
 - SQLite database, config and secrets on a volume at `/dashboard/data`.
 - Agents connect over gRPC through a Railway TCP proxy; the agent install command shows that address.
+- README: Deploy on Railway button for the published template `nezha-1`.
