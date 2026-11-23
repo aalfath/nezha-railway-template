@@ -31,11 +31,6 @@ post() {
 }
 
 init_admin() {
-  [ -n "$ADMIN_PASSWORD" ] || die "ADMIN_PASSWORD is empty; set it in the service variables"
-  _len=$(printf '%s' "$ADMIN_PASSWORD" | wc -c)
-  if [ "$_len" -lt 8 ] || [ "$_len" -gt 72 ]; then
-    die "ADMIN_PASSWORD must be 8 to 72 bytes long"
-  fi
   BOOT_TMP=$(mktemp -d)
   mkdir -p "$BOOT_TMP/conf"
   log "first boot: starting the dashboard on 127.0.0.1 to set the admin login"
@@ -53,6 +48,11 @@ init_admin() {
   _ok=0
   post /api/v1/login '{"username":"admin","password":"admin"}'
   if grep -q '"success":true' "$BOOT_TMP/body" 2>/dev/null; then
+    [ -n "$ADMIN_PASSWORD" ] || { kill "$_pid"; die "ADMIN_PASSWORD is empty; set it in the service variables"; }
+    _len=$(printf '%s' "$ADMIN_PASSWORD" | wc -c)
+    if [ "$_len" -lt 8 ] || [ "$_len" -gt 72 ]; then
+      kill "$_pid"; die "ADMIN_PASSWORD must be 8 to 72 bytes long"
+    fi
     _token=$(sed -n 's/.*"token":"\([^"]*\)".*/\1/p' "$BOOT_TMP/body")
     _csrf=$(sed -n 's/.*[Ss]et-[Cc]ookie: nz-csrf=\([^;]*\).*/\1/p' "$BOOT_TMP/headers" | head -n 1)
     [ -n "$_token" ] && [ -n "$_csrf" ] || { kill "$_pid"; die "login answered without a token or CSRF cookie"; }
@@ -66,10 +66,13 @@ init_admin() {
       cat "$BOOT_TMP/body" 2>/dev/null; echo
       kill "$_pid"; die "could not change the default admin password"
     fi
-  else
-    # admin/admin no longer works: the password was already changed earlier.
+  elif grep -q 'Unauthorized' "$BOOT_TMP/body" 2>/dev/null || grep -q ' 401 ' "$BOOT_TMP/headers" 2>/dev/null; then
+    # admin/admin is refused: the password was already changed earlier.
     log "default admin/admin login is not active; leaving the existing admin as it is"
     _ok=1
+  else
+    cat "$BOOT_TMP/body" 2>/dev/null; echo
+    kill "$_pid"; die "unexpected answer from the login check"
   fi
   kill "$_pid" 2>/dev/null
   wait "$_pid" 2>/dev/null
