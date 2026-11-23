@@ -51,7 +51,8 @@ init_admin() {
   done
 
   _ok=0
-  if post /api/v1/login '{"username":"admin","password":"admin"}'; then
+  post /api/v1/login '{"username":"admin","password":"admin"}'
+  if grep -q '"success":true' "$BOOT_TMP/body" 2>/dev/null; then
     _token=$(sed -n 's/.*"token":"\([^"]*\)".*/\1/p' "$BOOT_TMP/body")
     _csrf=$(sed -n 's/.*[Ss]et-[Cc]ookie: nz-csrf=\([^;]*\).*/\1/p' "$BOOT_TMP/headers" | head -n 1)
     [ -n "$_token" ] && [ -n "$_csrf" ] || { kill "$_pid"; die "login answered without a token or CSRF cookie"; }
